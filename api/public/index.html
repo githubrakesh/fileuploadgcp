@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload to GCP</title>
+    <script>
+        function onFileSelect(params) {
+            var fileKey = document.getElementsByName('key')[0];
+            fileKey.value = params[0].name;
+
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', '/api/url/' + params[0].name, true);
+            xhr.send(null);
+
+            xhr.onload = function () {
+                if (xhr.status != 200) { // analyze HTTP status of the response
+                    alert(`Error ${xhr.status}: ${xhr.statusText}`); // e.g. 404: Not Found
+                } else { // show the result
+                    var resData = JSON.parse(xhr.responseText)[0];
+
+                    var form = document.getElementById('uploadform');
+                    form.setAttribute('action', resData.url);
+
+                    var signature = document.getElementsByName('x-goog-signature')[0];
+                    signature.value = resData.fields['x-goog-signature'];
+
+                    var cred = document.getElementsByName('x-goog-credential')[0];
+                    cred.value = resData.fields['x-goog-credential'];
+
+                    var algorithm = document.getElementsByName('x-goog-algorithm')[0];
+                    algorithm.value = resData.fields['x-goog-algorithm'];
+
+                    var date = document.getElementsByName('x-goog-date')[0];
+                    date.value = resData.fields['x-goog-date'];
+
+                    var policy = document.getElementsByName('policy')[0];
+                    policy.value = resData.fields['policy'];
+                }
+            };
+            xhr.onerror = function () {
+                alert("Request failed");
+            };
+        }
+    </script>
+</head>
+
+<body>
+    <form id="uploadform" action="" method="post" enctype="multipart/form-data">
+        <input type="hidden" name="key" value="" />
+        <input type="hidden" name="success_action_status" value='201' />
+        <input type="hidden" name="x-goog-algorithm" value="GOOG4-RSA-SHA256">
+        <input type="hidden" name="x-goog-credential" value="" />
+        <input type="hidden" name="x-goog-signature" value="" />
+        <input type="hidden" name="x-goog-date" value="" />
+        <input type="hidden" name="policy" value="" />
+        <input type="file" onchange="onFileSelect(this.files)" name="file" />
+        <input type="submit" value="Upload">
+    </form>
+
+</body>
+
+</html>
